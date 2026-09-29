@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파스텔 위클리 스케줄러 🗓️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #fcf8f2;
+            --card-bg: #ffffff;
+            --primary-color: #ff9a9e;
+            --accent-color: #a1c4fd;
+            --text-color: #4a4a4a;
+            --border-color: #eedada;
+        }
+
+        body {
+            font-family: 'Gaegu', cursive;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#f0d2d2 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: #ff6b81;
+            text-shadow: 1px 1px 0px #fff;
+        }
+
+        .nav-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 2px solid var(--primary-color);
+            color: #ff6b81;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: 'Gaegu', cursive;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .week-range-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #555;
+            min-width: 220px;
+            display: inline-block;
+        }
+
+        .today-btn {
+            background: #ff6b81;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: 'Gaegu', cursive;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .today-btn:hover {
+            background: #e05268;
+        }
+
+        .weekly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .day-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 8px 15px rgba(255, 182, 185, 0.15);
+            border: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-card.today {
+            border: 2.5px solid #ff6b81;
+            background: #fffdfd;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed #f0d0d0;
+            margin-bottom: 12px;
+        }
+
+        .day-title-group {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .day-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4a4a4a;
+        }
+
+        .day-date {
+            font-size: 1.1rem;
+            color: #888;
+        }
+
+        .day-card.today .day-name {
+            color: #ff6b81;
+        }
+
+        .today-badge {
+            background: #ff6b81;
+            color: white;
+            font-size: 0.85rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            font-family: 'Gaegu', cursive;
+            font-size: 1.1rem;
+            outline: none;
+            background: #fffefb;
+        }
+
+        input[type="text"]:focus {
+            border-color: #ff9a9e;
+        }
+
+        button.add-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 12px;
+            border-radius: 12px;
+            font-family: 'Gaegu', cursive;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button.add-btn:hover {
+            background: #ff6b81;
+        }
+
+        .todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff9f9;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px dashed var(--border-color);
+            transition: 0.2s;
+        }
+
+        .todo-item.completed {
+            background: #f3f3f3;
+            border-color: #ddd;
+            opacity: 0.75;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #a0a0a0;
+        }
+
+        .todo-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #ff9a9e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .todo-item.completed .checkbox {
+            background: #ff9a9e;
+        }
+
+        .todo-text {
+            font-size: 1.15rem;
+            word-break: break-all;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff8b8b;
+            font-size: 1rem;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .delete-btn:hover {
+            opacity: 1;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #ccc;
+            font-size: 1rem;
+            padding: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🗓️ 주간 스케줄러 🗓️</h1>
+        
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="changeWeek(-1)">◀ 지난주</button>
+            <span class="week-range-text" id="week-range"></span>
+            <button class="nav-btn" onclick="changeWeek(1)">다음주 ▶</button>
+            <button class="today-btn" onclick="resetToCurrentWeek()">이번 주로</button>
+        </div>
+    </div>
+
+    <div class="weekly-grid" id="weekly-grid"></div>
+
+    <script>
+        const dayLabels = [
+            { name: '월요일 🎈' },
+            { name: '화요일 🌼' },
+            { name: '수요일 🍀' },
+            { name: '목요일 🍓' },
+            { name: '금요일 🎉' },
+            { name: '토요일 ☕' },
+            { name: '일요일 🌙' }
+        ];
+
+        // 주차 이동용 오프셋 (0 = 이번 주, 1 = 다음 주, -1 = 지난 주)
+        let weekOffset = 0;
+
+        // 저장 데이터 불러오기
+        let weeklyData = JSON.parse(localStorage.getItem('weekly_schedule_v3')) || {};
+
+        function saveTodos() {
+            localStorage.setItem('weekly_schedule_v3', JSON.stringify(weeklyData));
+        }
+
+        // 기준이 되는 월요일 구하기 함수
+        function getBaseMonday(offset = 0) {
+            const now = new Date();
+            const day = now.getDay();
+            // 일요일(0)은 지난주 처리 방지를 위해 -6, 월~토는 1~6 적용
+            const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
+            
+            const monday = new Date(now.setDate(diffToMonday + (offset * 7)));
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        }
+
+        // YYYY-MM-DD 변환 함수
+        function formatDateKey(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 지난주 / 다음주 버튼 클릭 시 실행
+        function changeWeek(direction) {
+            weekOffset += direction;
+            renderWeeklyBoard();
+        }
+
+        // 이번 주로 버튼 클릭 시 실행
+        function resetToCurrentWeek() {
+            weekOffset = 0;
+            renderWeeklyBoard();
+        }
+
+        function renderWeeklyBoard() {
+            const container = document.getElementById('weekly-grid');
+            container.innerHTML = '';
+
+            const baseMonday = getBaseMonday(weekOffset);
+            const todayKey = formatDateKey(new Date());
+
+            // 상단 주차 기간 표시 (월요일 ~ 일요일)
+            const sunday = new Date(baseMonday);
+            sunday.setDate(sunday.getDate() + 6);
+
+            document.getElementById('week-range').innerText = 
+                `${baseMonday.getMonth() + 1}월 ${baseMonday.getDate()}일 ~ ${sunday.getMonth() + 1}월 ${sunday.getDate()}일`;
+
+            // 월요일부터 일요일까지 7일 생성
+            for (let i = 0; i < 7; i++) {
+                const currentDate = new Date(baseMonday);
+                currentDate.setDate(currentDate.getDate() + i);
+
+                const dateKey = formatDateKey(currentDate);
+                const isToday = (dateKey === todayKey);
+
+                const dayCard = document.createElement('div');
+                dayCard.className = `day-card ${isToday ? 'today' : ''}`;
+
+                const dayTodos = weeklyData[dateKey] || [];
+                let itemsHtml = '';
+
+                if (dayTodos.length === 0) {
+                    itemsHtml = `<div class="empty-msg">일정이 없어요 ✨</div>`;
+                } else {
+                    dayTodos.forEach((todo, idx) => {
+                        itemsHtml += `
+                            <li class="todo-item ${todo.completed ? 'completed' : ''}">
+                                <div class="todo-content" onclick="toggleTodo('${dateKey}', ${idx})">
+                                    <div class="checkbox">${todo.completed ? '✔' : ''}</div>
+                                    <span class="todo-text">${escapeHtml(todo.text)}</span>
+                                </div>
+                                <button class="delete-btn" onclick="deleteTodo('${dateKey}', ${idx})">✖</button>
+                            </li>
+                        `;
+                    });
+                }
+
+                const monthDayStr = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+
+                dayCard.innerHTML = `
+                    <div class="day-header">
+                        <div class="day-title-group">
+                            <span class="day-name">${dayLabels[i].name}</span>
+                            <span class="day-date">(${monthDayStr})</span>
+                        </div>
+                        ${isToday ? '<span class="today-badge">TODAY</span>' : ''}
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="input-${dateKey}" placeholder="할 일 입력..." onkeypress="if(event.keyCode==13) addTodo('${dateKey}')">
+                        <button class="add-btn" onclick="addTodo('${dateKey}')">등록</button>
+                    </div>
+                    <ul class="todo-list">${itemsHtml}</ul>
+                `;
+
+                container.appendChild(dayCard);
+            }
+        }
+
+        function addTodo(dateKey) {
+            const input = document.getElementById(`input-${dateKey}`);
+            const text = input.value.trim();
+
+            if (text === '') return;
+
+            if (!weeklyData[dateKey]) weeklyData[dateKey] = [];
+            weeklyData[dateKey].push({ text: text, completed: false });
+
+            input.value = '';
+            saveTodos();
+            renderWeeklyBoard();
+        }
+
+        function toggleTodo(dateKey, index) {
+            weeklyData[dateKey][index].completed = !weeklyData[dateKey][index].completed;
+
+            if (weeklyData[dateKey][index].completed) {
+                confetti({
+                    particleCount: 35,
+                    spread: 50,
+                    origin: { y: 0.7 }
+                });
+            }
+
+            saveTodos();
+            renderWeeklyBoard();
+        }
+
+        function deleteTodo(dateKey, index) {
+            weeklyData[dateKey].splice(index, 1);
+            saveTodos();
+            renderWeeklyBoard();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
+        // 초기 실행
+        renderWeeklyBoard();
+    </script>
+</body>
+</html>
